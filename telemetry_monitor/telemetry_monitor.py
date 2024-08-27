@@ -98,6 +98,14 @@ class telemetry_monitor(Node):
         self.setup_speed_profile_plot()
         self.setup_localization_uncertainty_plot()
 
+        #make layout nice.
+        plt.subplots_adjust(left=0.05, 
+                            bottom=0.07, 
+                            right=0.988, 
+                            top=0.957, 
+                            wspace=0.171, 
+                            hspace=0.286)
+
     def setup_track_plot(self: "telemetry_monitor"):
         self.__axTrack.scatter(self.__raceline["xs"], self.__raceline["ys"], c=self.__raceline["cols"])
 
