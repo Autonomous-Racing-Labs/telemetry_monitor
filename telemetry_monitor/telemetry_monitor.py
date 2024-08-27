@@ -19,6 +19,8 @@ TOPIC_DEBUG_RACELINE = "/debug/raceline"
 TOPIC_DEBUG_TELEMETRY = "/debug/telemetry"
 TOPIC_LOCALIZATION_COVARIANCE = "/amcl_pose"
 
+DISPLAY_EPOCHS = 500
+
 class telemetry_monitor(Node):
     def __init__(self):
         super().__init__('telemetry_monitor')
@@ -82,17 +84,6 @@ class telemetry_monitor(Node):
             ys.append(marker.pose.position.y)
             cols.append( (marker.color.r, marker.color.g, marker.color.b, 1.0) )
 
-        #move points such that origin is in (0,0)
-        min_x = min(xs)
-        min_y = min(ys)
-        
-        if min_x > 0:
-            min_x *= -1
-        if min_y > 0:
-            min_y *= -1
-        
-        xs = [x-min_x for x in xs]
-        ys = [y-min_y for y in ys]
 
         self.__raceline["xs"] = xs
         self.__raceline["ys"] = ys
@@ -109,6 +100,7 @@ class telemetry_monitor(Node):
 
     def setup_track_plot(self: "telemetry_monitor"):
         self.__axTrack.scatter(self.__raceline["xs"], self.__raceline["ys"], c=self.__raceline["cols"])
+
         self.__axTrack.plot([x for x in self.__actualLine["xs"] if x is not None], 
                             [y for y in self.__actualLine["ys"] if y is not None], 
                             "b+", label="Driven Line")
@@ -119,35 +111,35 @@ class telemetry_monitor(Node):
 
 
     def setup_lateral_derivation_plot(self: "telemetry_monitor"):
-        self.__plotLateralDerivation, = self.__axLateralDerivation.plot(self.__lateralDerivation[-500:])
+        self.__plotLateralDerivation, = self.__axLateralDerivation.plot(self.__lateralDerivation[-DISPLAY_EPOCHS:])
         self.__axLateralDerivation.set_xlabel("Epochs")
         self.__axLateralDerivation.set_ylabel("Derivation [m]")
         self.__axLateralDerivation.set_ylim(0.0, 2.0)
-        self.__axLateralDerivation.set_xlim(0, 500)
+        self.__axLateralDerivation.set_xlim(0, DISPLAY_EPOCHS)
         self.__axLateralDerivation.set_title("Lateral Derivation")
         pass
 
     def setup_speed_profile_plot(self: "telemetry_monitor"):
-        self.__plotSpeedProfileTarget, = self.__axSpeedProfile.plot(self.__speedProfile["target"][-500:], label="Target", c="red")
-        self.__plotSpeedProfileActual, = self.__axSpeedProfile.plot(self.__speedProfile["actual"][-500:], label="Actual", c="black")
+        self.__plotSpeedProfileTarget, = self.__axSpeedProfile.plot(self.__speedProfile["target"][-DISPLAY_EPOCHS:], label="Target", c="red")
+        self.__plotSpeedProfileActual, = self.__axSpeedProfile.plot(self.__speedProfile["actual"][-DISPLAY_EPOCHS:], label="Actual", c="black")
 
         self.__axSpeedProfile.set_xlabel("Epochs")
         self.__axSpeedProfile.set_ylabel("Velocity [m/s]")
         self.__axSpeedProfile.set_ylim(0.0, 6.0)
-        self.__axSpeedProfile.set_xlim(0, 500)
+        self.__axSpeedProfile.set_xlim(0, DISPLAY_EPOCHS)
         self.__axSpeedProfile.set_title("Velocity Profile")
         self.__axSpeedProfile.legend()
         pass
 
     def setup_localization_uncertainty_plot(self: "telemetry_monitor"):
-        self.__plotLocalizationUncertaintyX, = self.__axLocalizationUncertainty.plot(self.__localizationUncertainty["x"][-500:], label="X", c="red")
-        self.__plotLocalizationUncertaintyY, = self.__axLocalizationUncertainty.plot(self.__localizationUncertainty["y"][-500:], label="Y", c="blue")
-        self.__plotLocalizationUncertaintyYaw, = self.__axLocalizationUncertainty.plot(self.__localizationUncertainty["yaw"][-500:], label="Yaw Angle", c="magenta")
+        self.__plotLocalizationUncertaintyX, = self.__axLocalizationUncertainty.plot(self.__localizationUncertainty["x"][-DISPLAY_EPOCHS:], label="X", c="red")
+        self.__plotLocalizationUncertaintyY, = self.__axLocalizationUncertainty.plot(self.__localizationUncertainty["y"][-DISPLAY_EPOCHS:], label="Y", c="blue")
+        self.__plotLocalizationUncertaintyYaw, = self.__axLocalizationUncertainty.plot(self.__localizationUncertainty["yaw"][-DISPLAY_EPOCHS:], label="Yaw Angle", c="magenta")
 
         self.__axLocalizationUncertainty.set_xlabel("Epochs")
         self.__axLocalizationUncertainty.set_ylabel("Uncertainty [m] / [rad]")
         self.__axLocalizationUncertainty.set_ylim(0.0, 2.0)
-        self.__axLocalizationUncertainty.set_xlim(0, 500)
+        self.__axLocalizationUncertainty.set_xlim(0, DISPLAY_EPOCHS)
         self.__axLocalizationUncertainty.set_title("Localization Uncertainty")
         self.__axLocalizationUncertainty.legend()
         pass
@@ -172,16 +164,16 @@ class telemetry_monitor(Node):
         self.setup_track_plot()
 
     def update_lateral_derivation_plot(self: "telemetry_monitor"):
-        self.__plotLateralDerivation.set_data(range(0, len(self.__lateralDerivation[-500:])), self.__lateralDerivation[-500:])
+        self.__plotLateralDerivation.set_data(range(0, len(self.__lateralDerivation[-DISPLAY_EPOCHS:])), self.__lateralDerivation[-DISPLAY_EPOCHS:])
 
     def update_speed_profile_plot(self: "telemetry_monitor"):
-        self.__plotSpeedProfileTarget.set_data(range(0, len(self.__speedProfile["target"][-500:])),self.__speedProfile["target"][-500:])
-        self.__plotSpeedProfileActual.set_data(range(0, len(self.__speedProfile["actual"][-500:])),self.__speedProfile["actual"][-500:])
+        self.__plotSpeedProfileTarget.set_data(range(0, len(self.__speedProfile["target"][-DISPLAY_EPOCHS:])),self.__speedProfile["target"][-DISPLAY_EPOCHS:])
+        self.__plotSpeedProfileActual.set_data(range(0, len(self.__speedProfile["actual"][-DISPLAY_EPOCHS:])),self.__speedProfile["actual"][-DISPLAY_EPOCHS:])
 
     def update_localization_uncertainty_plot(self: "telemetry_monitor"):
-        self.__plotLocalizationUncertaintyX.set_data(range(0, len(self.__localizationUncertainty["x"][-500:])), self.__localizationUncertainty["x"][-500:])
-        self.__plotLocalizationUncertaintyY.set_data(range(0, len(self.__localizationUncertainty["y"][-500:])), self.__localizationUncertainty["y"][-500:])
-        self.__plotLocalizationUncertaintyYaw.set_data(range(0, len(self.__localizationUncertainty["yaw"][-500:])), self.__localizationUncertainty["yaw"][-500:])
+        self.__plotLocalizationUncertaintyX.set_data(range(0, len(self.__localizationUncertainty["x"][-DISPLAY_EPOCHS:])), self.__localizationUncertainty["x"][-DISPLAY_EPOCHS:])
+        self.__plotLocalizationUncertaintyY.set_data(range(0, len(self.__localizationUncertainty["y"][-DISPLAY_EPOCHS:])), self.__localizationUncertainty["y"][-DISPLAY_EPOCHS:])
+        self.__plotLocalizationUncertaintyYaw.set_data(range(0, len(self.__localizationUncertainty["yaw"][-DISPLAY_EPOCHS:])), self.__localizationUncertainty["yaw"][-DISPLAY_EPOCHS:])
 
 
     def show_plots(self: "telemetry_monitor"):
